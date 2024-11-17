@@ -55,6 +55,75 @@ class Net(nn.Module):
         return x
 
 # 训练函数
+def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
+    criterion = nn.CrossEntropyLoss()
+    # 训练和验证
+    best_acc = 0.0  # 初始化最佳准确率
+    train_losses = []  # 用于保存训练损失
+    test_losses = []  # 用于保存测试损失
+    train_accs = []  # 用于保存训练准确率
+    test_accs = []  # 用于保存测试准确率
+    for epoch in range(num_epochs): #一个epoch跑完一遍测试集
+        net.train()  # 设置网络为训练模式
+        running_loss = 0.0
+        correct = 0
+        total = 0
+
+        # 使用tqdm显示训练进度条
+        train_bar = tqdm(trainloader, desc=f'Training Epoch {epoch + 1}/{num_epochs}')
+        for inputs, labels in train_bar:    #每一轮训练一个批次,每个批次大小为设置的8
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            optimizer.zero_grad()  # 梯度清零
+            outputs = net(inputs)  # 前向传播
+            loss = criterion(outputs, labels)  # 计算损失
+            loss.backward()  # 反向传播
+            optimizer.step()  # 优化器更新参数
+
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)  # 获取预测结果
+            total += labels.size(0)    #注意是labels.size
+            correct += predicted.eq(labels).sum().item()
+
+            # 更新进度条信息
+            train_bar.set_postfix(loss=running_loss / (len(train_bar) * trainloader.batch_size),
+                                  acc=100. * correct / total)
+
+        train_loss = running_loss / len(trainloader)
+        train_acc = 100. * correct / total
+        train_losses.append(train_loss)
+        train_accs.append(train_acc)
+
+        net.eval()  # 设置网络为评估模式
+        test_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():  # 禁用梯度计算
+            # 使用tqdm显示验证进度条
+            test_bar = tqdm(testloader, desc=f'Validating Epoch {epoch + 1}/{num_epochs}')
+            for inputs, labels in test_bar:
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += labels.size(0)
+                correct += predicted.eq(labels).sum().item()
+                test_bar.set_postfix(loss=test_loss / (len(test_bar) * testloader.batch_size),
+                                     acc=100. * correct / total)
+
+        test_loss = test_loss / len(testloader)
+        test_acc = 100. * correct / total
+        test_losses.append(test_loss)
+        test_accs.append(test_acc)
+        save_path="./model"
+        # 保存最好的模型
+        if test_acc > best_acc:
+            best_acc = test_acc
+            torch.save(net.state_dict(), os.path.join(save_path, f"{optimizer_name}_model.pth"))
+
+    return train_losses,train_accs,net
+
 def train( net, device,trainloader,optimizer_name,optimizer,epoch_num):
     criterion = nn.CrossEntropyLoss()
     net.train()
@@ -113,7 +182,7 @@ def test_model(net, device,testloader):
     print(f'Accuracy: {accuracy:.3f}')
     return accuracy, all_labels, all_preds,all_probs
 
-# 评估函数
+# 评估函数，绘制混淆矩阵、计算精确率、召回率、F1分数
 def evaluate(net, device, optimizer_name,testloader, y_true, y_pred):
     #混淆矩阵
     cm = confusion_matrix(y_true, y_pred)
@@ -129,7 +198,7 @@ def evaluate(net, device, optimizer_name,testloader, y_true, y_pred):
     f1 = f1_score(y_true, y_pred, average='weighted')
     print(f'Precision: {precision:.4f}, Recall: {recall:.4f}, F1 Score: {f1:.4f}')
     return precision, recall, f1
-# 绘图函数
+# 损失度和精确率可视化
 def plot_loss_acc(train_losses,train_accs):
     plt.figure(figsize=(10, 6))
     plt.subplot(1, 2, 1)
@@ -150,10 +219,13 @@ def plot_loss_acc(train_losses,train_accs):
     # 保存图表
     plt.savefig('./results/plots/loss_accuracy_curves.png')
     plt.show()
+#绘制ROC曲线
 def plot_auc_roc(all_labels,all_probs,optimizer_name):
-    # 计算AUC-ROC曲线
+    # 计算ROC曲线
+    #将标签二值化
     y_test_binarized = label_binarize(all_labels, classes=np.arange(10))
     #print(y_test_binarized)
+    #设置种类
     n_classes = y_test_binarized.shape[1]
     #print(n_classes)
     y_score = np.array(all_probs)[:, :n_classes]
@@ -181,22 +253,23 @@ def plot_auc_roc(all_labels,all_probs,optimizer_name):
         plt.title('Receiver operating characteristic for class {}'.format(i))
         plt.legend(loc="lower right")
         plt.show()
-    plt.savefig(f'./results/roc_curves/{optimizer_name}roc_curve.png')
+        plt.savefig(f'./results/roc_curves/{optimizer_name}_roc_curve.png')
 
 
 #主函数
 def main():
     # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-    num_epochs = 4
+    #训练轮数
+    num_epochs = 50
     net = LeNet().to(device)
     optimizers = {
-        # 'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
-        # 'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
+        'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
+        'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
         'Adam': optim.Adam(net.parameters(), lr=0.001),
-        # 'AdamW': optim.AdamW(net.parameters(), lr=0.001),
-        # 'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
-        # 'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
+        'AdamW': optim.AdamW(net.parameters(), lr=0.001),
+        'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
+        'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
     }
     # 保存图表路径
     if not os.path.exists('./results/plots'):
@@ -205,6 +278,7 @@ def main():
         os.makedirs('./model')
     if not os.path.exists('./results/roc_curves'):
         os.makedirs('./results/roc_curves')
+
     #得到各个算法的损失度、准确率、精确率、召回率、f1分数
     all_train_losses = {name: [] for name in optimizers.keys()}
     all_train_accs = {name: [] for name in optimizers.keys()}
@@ -216,73 +290,8 @@ def main():
     for optimizer_name, optimizer in optimizers.items():
         print(f'Training with {optimizer_name}')
         criterion = nn.CrossEntropyLoss()
-        net = LeNet().to(device)
-        train_losses = []  # 用于保存每一轮的数据
-        train_accs = []
-        test_losses = []
-        test_accs = []
-        best_acc = 0.0  # 初始化最佳准确率
-        for epoch in range(num_epochs):  # 一个epoch跑完一遍测试集
-            net.train()  # 设置网络为训练模式
-            running_loss = 0.0
-            correct = 0
-            total = 0
 
-            # 使用tqdm显示训练进度条
-            train_bar = tqdm(trainloader, desc=f'Training Epoch {epoch + 1}/{num_epochs}')
-            for inputs, labels in train_bar:  # 每一轮训练一个批次,每个批次大小为设置的8
-                inputs, labels = inputs.to(device), labels.to(device)
-
-                optimizer.zero_grad()  # 梯度清零
-                outputs = net(inputs)  # 前向传播
-                loss = criterion(outputs, labels)  # 计算损失
-                loss.backward()  # 反向传播
-                optimizer.step()  # 优化器更新参数
-
-                running_loss += loss.item()
-                _, predicted = outputs.max(1)  # 获取预测结果
-                total += labels.size(0)  # 注意是labels.size
-                correct += predicted.eq(labels).sum().item()
-
-                # 更新进度条信息
-                train_bar.set_postfix(loss=running_loss / (len(train_bar) * trainloader.batch_size),
-                                      acc=100. * correct / total)
-
-            train_loss = running_loss / len(trainloader)
-            train_acc = 100. * correct / total
-            train_losses.append(train_loss)
-            train_accs.append(train_acc)
-
-            net.eval()  # 设置网络为评估模式
-            test_loss = 0.0
-            correct = 0
-            total = 0
-            with torch.no_grad():  # 禁用梯度计算
-                # 使用tqdm显示验证进度条
-                test_bar = tqdm(testloader, desc=f'Validating Epoch {epoch + 1}/{num_epochs}')
-                for inputs, labels in test_bar:
-                    inputs, labels = inputs.to(device), labels.to(device)
-                    outputs = net(inputs)
-                    loss = criterion(outputs, labels)
-                    test_loss += loss.item()
-                    _, predicted = outputs.max(1)
-                    total += labels.size(0)
-                    correct += predicted.eq(labels).sum().item()
-                    test_bar.set_postfix(loss=test_loss / (len(test_bar) * testloader.batch_size),
-                                         acc=100. * correct / total)
-
-            test_loss = test_loss / len(testloader)
-            test_acc = 100. * correct / total
-            test_losses.append(test_loss)
-            test_accs.append(test_acc)
-
-            save_path="./model"
-            # 保存最好的模型
-            if test_acc > best_acc:
-                best_acc = test_acc
-                torch.save(net.state_dict(), os.path.join(save_path, "test.pth"))
-
-       # train_loss, train_correct ,net= train_and_test(device,trainloader, optimizer_name,optimizer, epochs)  # 训练网络
+        train_losses, train_accs ,net= train_and_test(net,device,trainloader, optimizer_name,optimizer, num_epochs)  # 训练网络
         all_train_losses[optimizer_name]= train_losses
         all_train_accs[optimizer_name]= train_accs
 

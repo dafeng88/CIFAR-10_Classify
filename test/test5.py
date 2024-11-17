@@ -54,7 +54,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 # 训练模型
-num_epochs = 20
+num_epochs = 5
 for epoch in range(num_epochs):
     timestart = time.time()
     running_loss = 0.0
