@@ -241,19 +241,20 @@ def plot_auc_roc(all_labels,all_probs,optimizer_name):
         fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], y_score[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
 
-    # 绘制AUC-ROC曲线
+    # 绘制所有类别的ROC曲线在同一张图上
+    plt.figure(figsize=(10, 8))
     for i in range(n_classes):
-        plt.figure()
-        plt.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f)' % roc_auc[i])
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic for class {}'.format(i))
-        plt.legend(loc="lower right")
-        plt.show()
-        plt.savefig(f'./results/roc_curves/{optimizer_name}_roc_curve.png')
+        plt.plot(fpr[i], tpr[i], label='Class {} (area = {:.2f})'.format(i, roc_auc[i]))
+
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic for CIFAR-10')
+    plt.legend(loc="lower right")
+    plt.savefig(f"./results/roc_curves/{optimizer_name}_roc_curve.png")
+    plt.show()
 
 
 #主函数
@@ -262,15 +263,15 @@ def main():
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     #训练轮数
     num_epochs = 50
-    net = LeNet().to(device)
-    optimizers = {
-        'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
-        'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
-        'Adam': optim.Adam(net.parameters(), lr=0.001),
-        'AdamW': optim.AdamW(net.parameters(), lr=0.001),
-        'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
-        'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
-    }
+    # optimizers = {
+    #     'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
+    #     'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
+    #     'Adam': optim.Adam(net.parameters(), lr=0.001),
+    #     'AdamW': optim.AdamW(net.parameters(), lr=0.001),
+    #     'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
+    #     'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
+    # }
+    optimizer_names=["SGD","Adam","Adadelta"]
     # 保存图表路径
     if not os.path.exists('./results/plots'):
         os.makedirs('./results/plots')
@@ -280,14 +281,25 @@ def main():
         os.makedirs('./results/roc_curves')
 
     #得到各个算法的损失度、准确率、精确率、召回率、f1分数
-    all_train_losses = {name: [] for name in optimizers.keys()}
-    all_train_accs = {name: [] for name in optimizers.keys()}
-    all_test_losses = {name: [] for name in optimizers.keys()}
-    all_test_corrects = {name: [] for name in optimizers.keys()}
-    precisions={name: 0.0 for name in optimizers.keys()}
-    recalls={name: 0.0 for name in optimizers.keys()}
-    f1s={name: 0.0 for name in optimizers.keys()}
-    for optimizer_name, optimizer in optimizers.items():
+    all_train_losses = {name: [] for name in optimizer_names}
+    all_train_accs = {name: [] for name in optimizer_names}
+    all_test_losses = {name: [] for name in optimizer_names}
+    all_test_corrects = {name: [] for name in optimizer_names}
+    precisions={name: 0.0 for name in optimizer_names}
+    recalls={name: 0.0 for name in optimizer_names}
+    f1s={name: 0.0 for name in optimizer_names}
+
+    for i in range(3):
+        net = LeNet().to(device)
+        if i==0:
+            optimizer_name="SGD"
+            optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        elif i==1:
+            optimizer_name="Adam"
+            optimizer = optim.Adam(net.parameters(), lr=0.001)
+        elif i==2:
+            optimizer_name="Adadelta"
+            optimizer = optim.Adadelta(net.parameters(), lr=0.001)
         print(f'Training with {optimizer_name}')
         criterion = nn.CrossEntropyLoss()
 
