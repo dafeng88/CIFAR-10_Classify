@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a73e9e9-cf07-45c0-bde7-ee08540de7e2" name="更改" comment="测试所有算法">
+    <list default="true" id="9a73e9e9-cf07-45c0-bde7-ee08540de7e2" name="更改" comment="能运行的且能评估的代码">
+      <change afterPath="$PROJECT_DIR$/net/resnet.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classfify.py" beforeDir="false" afterPath="$PROJECT_DIR$/classfify.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test0.py" beforeDir="false" afterPath="$PROJECT_DIR$/test/test0.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/test5.py" beforeDir="false" afterPath="$PROJECT_DIR$/test/test5.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +61,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/Project/CIFAR-10-test",
+    "last_opened_file_path": "D:/Project/github/Pytorch-Image-Classification-main",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -221,7 +220,7 @@
       <option name="presentableId" value="Default" />
       <updated>1731325136096</updated>
       <workItem from="1731325141022" duration="52057000" />
-      <workItem from="1731816104514" duration="4690000" />
+      <workItem from="1731816104514" duration="29955000" />
     </task>
     <task id="LOCAL-00001" summary="第一次测试">
       <option name="closed" value="true" />
@@ -247,7 +246,23 @@
       <option name="project" value="LOCAL" />
       <updated>1731815401891</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="测试ADAM算法">
+      <option name="closed" value="true" />
+      <created>1731827771614</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1731827771614</updated>
+    </task>
+    <task id="LOCAL-00005" summary="能运行的且能评估的代码">
+      <option name="closed" value="true" />
+      <created>1731843843663</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1731843843663</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -267,7 +282,9 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="第一次测试" />
     <MESSAGE value="测试所有算法" />
-    <option name="LAST_COMMIT_MESSAGE" value="测试所有算法" />
+    <MESSAGE value="测试ADAM算法" />
+    <MESSAGE value="能运行的且能评估的代码" />
+    <option name="LAST_COMMIT_MESSAGE" value="能运行的且能评估的代码" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -296,7 +313,7 @@
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$classfify__1_.coverage" NAME="classfify (1) 覆盖结果" MODIFIED="1731813638035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test5.coverage" NAME="test5 覆盖结果" MODIFIED="1731815844555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test0.coverage" NAME="test0 覆盖结果" MODIFIED="1731817323980" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
-    <SUITE FILE_PATH="coverage/CIFAR_10_Classification$classfify.coverage" NAME="classfify 覆盖结果" MODIFIED="1731825591932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CIFAR_10_Classification$classfify.coverage" NAME="classfify 覆盖结果" MODIFIED="1731856304146" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test3.coverage" NAME="test3 覆盖结果" MODIFIED="1731809132404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$train.coverage" NAME="train 覆盖结果" MODIFIED="1731592085855" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test0__1_.coverage" NAME="test0 (1) 覆盖结果" MODIFIED="1731809358909" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />

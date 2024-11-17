@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 from sklearn.preprocessing import label_binarize
+from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
@@ -13,14 +14,18 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
     auc
 from sklearn.metrics import roc_curve
 from tqdm import tqdm
+from torchvision import models
 
-from net.lenet import LeNet
 
 # 设置设备（使用GPU如果可用，否则使用CPU）
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# 数据预处理，转为Tensor并归一化
+# 数据预处理，数据增强，并归一化
 transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),  # 随机水平翻转
+    transforms.RandomCrop(32, padding=4),  # 随机裁剪
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # 色彩扰动
+    transforms.RandomGrayscale(p=0.1),  # 以10%的概率将图像转换为灰度
     transforms.ToTensor(),  # 转为Tensor
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # 归一化
 ])
@@ -29,8 +34,13 @@ transform = transforms.Compose([
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 trainloader = DataLoader(trainset, batch_size=8, shuffle=True, num_workers=2)
 
-# 加载CIFAR-10测试集
-testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+# 加载CIFAR-10测试集（测试集通常不做数据增强，只归一化）
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+])
+
+testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=test_transform)
 testloader = DataLoader(testset, batch_size=8, shuffle=False, num_workers=2)
 
 
@@ -56,7 +66,14 @@ class Net(nn.Module):
 
 # 训练函数
 def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
+    # 交叉熵损失函数
     criterion = nn.CrossEntropyLoss()
+    # # 选择一个学习率调度器，例如 StepLR
+    # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    # 使用 ReduceLROnPlateau
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    #当你观察到模型的验证损失或其他监控指标在一段时间内不再下降（或上升），但仍希望继续训练模型时，ReduceLROnPlateau 可以帮助你自动减少学习率，从而使模型可能跳出局部最优、继续收敛。
+
     # 训练和验证
     best_acc = 0.0  # 初始化最佳准确率
     train_losses = []  # 用于保存训练损失
@@ -89,6 +106,10 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
             train_bar.set_postfix(loss=running_loss / (len(train_bar) * trainloader.batch_size),
                                   acc=100. * correct / total)
 
+
+        # #每一轮结束后调用学习率调度器
+        # scheduler.step()
+        #计算每一轮的损失度和准确率并添加进数组
         train_loss = running_loss / len(trainloader)
         train_acc = 100. * correct / total
         train_losses.append(train_loss)
@@ -116,6 +137,8 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
         test_acc = 100. * correct / total
         test_losses.append(test_loss)
         test_accs.append(test_acc)
+        # 每一轮结束后调用学习率调度器
+        scheduler.step(test_loss)
         save_path="./model"
         # 保存最好的模型
         if test_acc > best_acc:
@@ -262,7 +285,7 @@ def main():
     # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     #训练轮数
-    num_epochs = 50
+    num_epochs = 15
     # optimizers = {
     #     'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
     #     'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
@@ -271,7 +294,7 @@ def main():
     #     'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
     #     'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
     # }
-    optimizer_names=["SGD","Adam","Adadelta"]
+    optimizer_names=["SGD+Momentum","AdamW","Adadelta"]
     # 保存图表路径
     if not os.path.exists('./results/plots'):
         os.makedirs('./results/plots')
@@ -290,10 +313,16 @@ def main():
     f1s={name: 0.0 for name in optimizer_names}
 
     for i in range(3):
-        net = LeNet().to(device)
+        # # 加载预训练的 ResNet18
+        # net = models.resnet18(pretrained=True)
+        # # 替换最后一层，以匹配你的数据集的类别数
+        # num_classes = 10  # CIFAR-10 数据集有 10 个类别
+        # net.fc = nn.Linear(net.fc.in_features, num_classes)
+        # net = net.to(device)
+        net=Net().to(device)
         if i==0:
             optimizer_name="SGD"
-            optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+            optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9,weight_decay=5e-4)
         elif i==1:
             optimizer_name="Adam"
             optimizer = optim.Adam(net.parameters(), lr=0.001)
