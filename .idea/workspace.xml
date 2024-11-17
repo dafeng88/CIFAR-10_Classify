@@ -4,18 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9a73e9e9-cf07-45c0-bde7-ee08540de7e2" name="更改" comment="第一次测试">
-      <change afterPath="$PROJECT_DIR$/classfify.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/net/lenet.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/note.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test0.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/test3.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/trash" afterDir="false" />
+    <list default="true" id="9a73e9e9-cf07-45c0-bde7-ee08540de7e2" name="更改" comment="测试所有算法">
+      <change afterPath="$PROJECT_DIR$/test/test5.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/evaluate_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/test0.py" beforeDir="false" afterPath="$PROJECT_DIR$/test/test0.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +53,7 @@
     "Python.evaluate_model.executor": "Run",
     "Python.test.executor": "Run",
     "Python.test0 (1).executor": "Run",
+    "Python.test0.executor": "Run",
     "Python.test2.executor": "Run",
     "Python.test3.executor": "Run",
     "Python.train.executor": "Run",
@@ -73,7 +66,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -83,30 +76,7 @@
       <recent name="D:\Project\CIFAR-10_Classification\Net" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.classfify">
-    <configuration name="classfify" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="CIFAR-10_Classification" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/classfify.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.test0">
     <configuration name="evaluate_model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CIFAR-10_Classification" />
       <option name="ENV_FILES" value="" />
@@ -130,7 +100,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test0 (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="test0" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CIFAR-10_Classification" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -201,8 +171,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.classfify" />
-        <item itemvalue="Python.test0 (1)" />
+        <item itemvalue="Python.test0" />
         <item itemvalue="Python.test3" />
         <item itemvalue="Python.evaluate_model" />
         <item itemvalue="Python.test2" />
@@ -225,7 +194,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1731325136096</updated>
-      <workItem from="1731325141022" duration="50307000" />
+      <workItem from="1731325141022" duration="51447000" />
     </task>
     <task id="LOCAL-00001" summary="第一次测试">
       <option name="closed" value="true" />
@@ -235,7 +204,15 @@
       <option name="project" value="LOCAL" />
       <updated>1731325636815</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="测试所有算法">
+      <option name="closed" value="true" />
+      <created>1731814274571</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1731814274571</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -254,7 +231,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="第一次测试" />
-    <option name="LAST_COMMIT_MESSAGE" value="第一次测试" />
+    <MESSAGE value="测试所有算法" />
+    <option name="LAST_COMMIT_MESSAGE" value="测试所有算法" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -276,6 +254,7 @@
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test2.coverage" NAME="test2 覆盖结果" MODIFIED="1731765256256" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$evaluate_model.coverage" NAME="evaluate_model 覆盖结果" MODIFIED="1731780797806" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$classfify__1_.coverage" NAME="classfify (1) 覆盖结果" MODIFIED="1731813638035" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test0.coverage" NAME="test0 覆盖结果" MODIFIED="1731814907897" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$classfify.coverage" NAME="classfify 覆盖结果" MODIFIED="1731813813894" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$test3.coverage" NAME="test3 覆盖结果" MODIFIED="1731809132404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
     <SUITE FILE_PATH="coverage/CIFAR_10_Classification$train.coverage" NAME="train 覆盖结果" MODIFIED="1731592085855" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
