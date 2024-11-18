@@ -1,4 +1,4 @@
-#  声明：本代码并非自己编写，由他人提供
+
 import torch
 import torchvision
 import torchvision.transforms as transforms

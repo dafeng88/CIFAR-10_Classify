@@ -16,7 +16,6 @@ from sklearn.metrics import roc_curve
 from tqdm import tqdm
 from torchvision import models
 
-
 # 设置设备（使用GPU如果可用，否则使用CPU）
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -70,8 +69,8 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
     criterion = nn.CrossEntropyLoss()
     # # 选择一个学习率调度器，例如 StepLR
     # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-    # 使用 ReduceLROnPlateau
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    # # 使用 ReduceLROnPlateau
+    #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
     #当你观察到模型的验证损失或其他监控指标在一段时间内不再下降（或上升），但仍希望继续训练模型时，ReduceLROnPlateau 可以帮助你自动减少学习率，从而使模型可能跳出局部最优、继续收敛。
 
     # 训练和验证
@@ -106,9 +105,8 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
             train_bar.set_postfix(loss=running_loss / (len(train_bar) * trainloader.batch_size),
                                   acc=100. * correct / total)
 
-
-        # #每一轮结束后调用学习率调度器
-        # scheduler.step()
+        #每一轮结束后调用学习率调度器
+        #scheduler.step()
         #计算每一轮的损失度和准确率并添加进数组
         train_loss = running_loss / len(trainloader)
         train_acc = 100. * correct / total
@@ -138,7 +136,7 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
         test_losses.append(test_loss)
         test_accs.append(test_acc)
         # 每一轮结束后调用学习率调度器
-        scheduler.step(test_loss)
+        #scheduler.step(test_loss)
         save_path="./model"
         # 保存最好的模型
         if test_acc > best_acc:
@@ -285,7 +283,7 @@ def main():
     # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     #训练轮数
-    num_epochs = 15
+    num_epochs = 50
     # optimizers = {
     #     'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
     #     'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
@@ -320,14 +318,12 @@ def main():
         # net.fc = nn.Linear(net.fc.in_features, num_classes)
         # net = net.to(device)
         net=Net().to(device)
+        optimizer_name = optimizer_names[i]
         if i==0:
-            optimizer_name="SGD"
-            optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9,weight_decay=5e-4)
+            optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
         elif i==1:
-            optimizer_name="Adam"
-            optimizer = optim.Adam(net.parameters(), lr=0.001)
+            optimizer = optim.AdamW(net.parameters(), lr=0.001)
         elif i==2:
-            optimizer_name="Adadelta"
             optimizer = optim.Adadelta(net.parameters(), lr=0.001)
         print(f'Training with {optimizer_name}')
         criterion = nn.CrossEntropyLoss()
