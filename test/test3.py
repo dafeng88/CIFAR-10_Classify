@@ -1,3 +1,4 @@
+import os
 
 import torch
 import torchvision
@@ -21,10 +22,10 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 )
 
-trainset = torchvision.datasets.CIFAR10(root='./cifar10', train=True, download=True, transform=transform)
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=100, shuffle=True, num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root='./cifar10', train=False, download=True, transform=transform)
+testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -63,6 +64,9 @@ def imshow(img):
 
 
 if __name__ == '__main__':
+    # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
     for epoch in range(20):
         timestart = time.time()
         running_loss = 0.0

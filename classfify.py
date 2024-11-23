@@ -15,16 +15,16 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
 from sklearn.metrics import roc_curve
 from tqdm import tqdm
 from torchvision import models
+from net.lenet import LeNet
+
 
 # 设置设备（使用GPU如果可用，否则使用CPU）
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # 数据预处理，数据增强，并归一化
 transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(),  # 随机水平翻转
-    transforms.RandomCrop(32, padding=4),  # 随机裁剪
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # 色彩扰动
-    transforms.RandomGrayscale(p=0.1),  # 以10%的概率将图像转换为灰度
+    transforms.RandomHorizontalFlip(),  # 以50%的概率对图像进行随机水平翻转
+    transforms.RandomGrayscale(p=0.1),  # 以10%的概率将图像随机转换为灰度图像
     transforms.ToTensor(),  # 转为Tensor
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # 归一化
 ])
@@ -102,7 +102,7 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
             correct += predicted.eq(labels).sum().item()
 
             # 更新进度条信息
-            train_bar.set_postfix(loss=running_loss / (len(train_bar) * trainloader.batch_size),
+            train_bar.set_postfix(loss=loss,
                                   acc=100. * correct / total)
 
         #每一轮结束后调用学习率调度器
@@ -128,7 +128,7 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
                 _, predicted = outputs.max(1)
                 total += labels.size(0)
                 correct += predicted.eq(labels).sum().item()
-                test_bar.set_postfix(loss=test_loss / (len(test_bar) * testloader.batch_size),
+                test_bar.set_postfix(loss=loss,
                                      acc=100. * correct / total)
 
         test_loss = test_loss / len(testloader)
@@ -238,7 +238,7 @@ def plot_loss_acc(train_losses,train_accs):
     plt.title('Accuracy Curves for Different Algorithms')
     plt.legend()
     # 保存图表
-    plt.savefig('./results/plots/loss_accuracy_curves.png')
+    plt.savefig('./results/plots/loss_accuracy_curves1.png')
     plt.show()
 #绘制ROC曲线
 def plot_auc_roc(all_labels,all_probs,optimizer_name):
@@ -283,7 +283,7 @@ def main():
     # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     #训练轮数
-    num_epochs = 50
+    num_epochs = 20
     # optimizers = {
     #     'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
     #     'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
@@ -292,7 +292,7 @@ def main():
     #     'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
     #     'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
     # }
-    optimizer_names=["SGD+Momentum","AdamW","Adadelta"]
+    optimizer_names=["SGD+Momentum","Adam","Adadelta"]
     # 保存图表路径
     if not os.path.exists('./results/plots'):
         os.makedirs('./results/plots')
@@ -317,14 +317,14 @@ def main():
         # num_classes = 10  # CIFAR-10 数据集有 10 个类别
         # net.fc = nn.Linear(net.fc.in_features, num_classes)
         # net = net.to(device)
-        net=Net().to(device)
+        net=LeNet().to(device)
         optimizer_name = optimizer_names[i]
         if i==0:
             optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
         elif i==1:
-            optimizer = optim.AdamW(net.parameters(), lr=0.001)
+            optimizer = optim.Adam(net.parameters(), lr=0.001)
         elif i==2:
-            optimizer = optim.Adadelta(net.parameters(), lr=0.001)
+            optimizer = optim.Adadelta(net.parameters(), lr=1.0)
         print(f'Training with {optimizer_name}')
         criterion = nn.CrossEntropyLoss()
 
