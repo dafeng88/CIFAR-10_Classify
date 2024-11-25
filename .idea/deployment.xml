@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@eucoyajc4giwbzmosnow.deepln.com:42520 password" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
+      <paths name="root@eucoyajc4giwbzmosnow.deepln.com:42520 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/data/coding" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="root@fjyuhea8wnx3oguvsnow.deepln.com:40430 password">
         <serverdata>
           <mappings>
@@ -45,5 +52,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

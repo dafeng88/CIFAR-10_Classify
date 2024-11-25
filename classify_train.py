@@ -17,74 +17,69 @@ from tqdm import tqdm
 from torchvision import models
 from net.lenet import LeNet
 
-
-# 设置设备（使用GPU如果可用，否则使用CPU）
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# 数据预处理，数据增强，并归一化
-transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(),  # 以50%的概率对图像进行随机水平翻转
-    transforms.RandomGrayscale(p=0.1),  # 以10%的概率将图像随机转换为灰度图像
-    transforms.ToTensor(),  # 转为Tensor
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # 归一化
+# GPU计算
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+torch.backends.cudnn.benchmark = True
+# 数据预处理
+train_transform = transforms.Compose([
+    transforms.ToTensor()
+    , transforms.RandomCrop(32, padding=4)  # 先四周填充0，在吧图像随机裁剪成32*32
+    , transforms.RandomHorizontalFlip(p=0.5)  # 随机水平翻转 选择一个概率概率
+    , transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # 均值，标准差
 ])
 
-# 加载CIFAR-10训练集
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-trainloader = DataLoader(trainset, batch_size=8, shuffle=True, num_workers=2)
-
-# 加载CIFAR-10测试集（测试集通常不做数据增强，只归一化）
+# 测试集通常不做数据增强，只归一化）
 test_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transforms.ToTensor()
+    , transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=test_transform)
-testloader = DataLoader(testset, batch_size=8, shuffle=False, num_workers=2)
+# 加载数据集
+train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=train_transform)
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=128, shuffle=True, num_workers=0)
 
+test_set = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=test_transform)
+test_loader = torch.utils.data.DataLoader(test_set, batch_size=128, shuffle=False, num_workers=0)
 
-# 定义网络结构
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+# 定义模型
+model_ft = torchvision.models.resnet18(pretrained=False)
 
-    def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = nn.functional.relu(self.fc1(x))
-        x = nn.functional.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+# 修改模型
+model_ft.conv1 = nn.Conv2d(3, 64, 3, stride=1, padding=1, bias=False)  # 首层改成3x3卷积核
+model_ft.maxpool = nn.MaxPool2d(1, 1, 0)  # 图像太小 本来就没什么特征 所以这里通过1x1的池化核让池化层失效
+num_ftrs = model_ft.fc.in_features  # 获取（fc）层的输入的特征数
+model_ft.fc = nn.Linear(num_ftrs, 10)
+
+model_ft.to(device)
+
 
 # 训练函数
-def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
+def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs,i):
     # 交叉熵损失函数
     criterion = nn.CrossEntropyLoss()
-    # # 选择一个学习率调度器，例如 StepLR
-    # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-    # # 使用 ReduceLROnPlateau
-    #scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
-    #当你观察到模型的验证损失或其他监控指标在一段时间内不再下降（或上升），但仍希望继续训练模型时，ReduceLROnPlateau 可以帮助你自动减少学习率，从而使模型可能跳出局部最优、继续收敛。
-
     # 训练和验证
     best_acc = 0.0  # 初始化最佳准确率
     train_losses = []  # 用于保存训练损失
     test_losses = []  # 用于保存测试损失
     train_accs = []  # 用于保存训练准确率
     test_accs = []  # 用于保存测试准确率
+    # 用于记录损失值未发生变化batch数
+    counter = 0
+    # 初始学习率
+    Lr = 0.1
+    with open("accuracy_log.txt", "a") as file:  # "a" 表示追加模式
+        file.write(f"traning:{optimizer_name}\n")  # 写入一行数据
     for epoch in range(num_epochs): #一个epoch跑完一遍测试集
+        if i==0:
+            if counter / 10 == 1:
+                counter = 0
+                Lr = Lr * 0.5
+            #重新设置优化器
+            optimizer = optim.SGD(model_ft.parameters(), lr=Lr, momentum=0.9, weight_decay=5e-4)
         net.train()  # 设置网络为训练模式
         running_loss = 0.0
         correct = 0
         total = 0
-
         # 使用tqdm显示训练进度条
         train_bar = tqdm(trainloader, desc=f'Training Epoch {epoch + 1}/{num_epochs}')
         for inputs, labels in train_bar:    #每一轮训练一个批次,每个批次大小为设置的8
@@ -102,14 +97,14 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
             correct += predicted.eq(labels).sum().item()
 
             # 更新进度条信息
-            train_bar.set_postfix(loss=loss,
-                                  acc=100. * correct / total)
+            train_bar.set_postfix(loss=loss.item(),
+                                  acc=100.0 * correct / total)
 
         #每一轮结束后调用学习率调度器
         #scheduler.step()
         #计算每一轮的损失度和准确率并添加进数组
         train_loss = running_loss / len(trainloader)
-        train_acc = 100. * correct / total
+        train_acc = 100.0 * correct / total
         train_losses.append(train_loss)
         train_accs.append(train_acc)
 
@@ -119,7 +114,7 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
         total = 0
         with torch.no_grad():  # 禁用梯度计算
             # 使用tqdm显示验证进度条
-            test_bar = tqdm(testloader, desc=f'Validating Epoch {epoch + 1}/{num_epochs}')
+            test_bar = tqdm(test_loader, desc=f'Validating Epoch {epoch + 1}/{num_epochs}')
             for inputs, labels in test_bar:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = net(inputs)
@@ -128,11 +123,11 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
                 _, predicted = outputs.max(1)
                 total += labels.size(0)
                 correct += predicted.eq(labels).sum().item()
-                test_bar.set_postfix(loss=loss,
-                                     acc=100. * correct / total)
+                test_bar.set_postfix(loss=loss.item(),
+                                     acc=100.0 * correct / total)
 
-        test_loss = test_loss / len(testloader)
-        test_acc = 100. * correct / total
+        test_loss = test_loss / len(test_loader)
+        test_acc = 100.0 * correct / total
         test_losses.append(test_loss)
         test_accs.append(test_acc)
         # 每一轮结束后调用学习率调度器
@@ -141,9 +136,15 @@ def train_and_test(net,device,trainloader,optimizer_name,optimizer,num_epochs):
         # 保存最好的模型
         if test_acc > best_acc:
             best_acc = test_acc
+            # 将数据追加到文件中
+            with open("accuracy_log.txt", "a") as file:  # "a" 表示追加模式
+                file.write(f"{epoch + 1},{best_acc:.2f}\n")  # 写入一行数据
             torch.save(net.state_dict(), os.path.join(save_path, f"{optimizer_name}_model.pth"))
+            counter=0
+        else:
+            counter += 1
 
-    return train_losses,train_accs,net
+    return net,train_losses,train_accs,test_losses,test_accs
 
 def train( net, device,trainloader,optimizer_name,optimizer,epoch_num):
     criterion = nn.CrossEntropyLoss()
@@ -220,9 +221,9 @@ def evaluate(net, device, optimizer_name,testloader, y_true, y_pred):
     print(f'Precision: {precision:.4f}, Recall: {recall:.4f}, F1 Score: {f1:.4f}')
     return precision, recall, f1
 # 损失度和精确率可视化
-def plot_loss_acc(train_losses,train_accs):
-    plt.figure(figsize=(10, 6))
-    plt.subplot(1, 2, 1)
+def plot_loss_acc(train_losses,train_accs,all_test_losses,all_test_accs):
+    plt.figure(figsize=(10, 10))
+    plt.subplot(2, 2, 1)
     for name, loss_values in train_losses.items():
         plt.plot(loss_values, label=name)
     plt.xlabel('Epoch')
@@ -230,13 +231,30 @@ def plot_loss_acc(train_losses,train_accs):
     plt.title('Training Loss Curves for Different Algorithms')
     plt.legend()
 
-    plt.subplot(1, 2, 2)
+    plt.subplot(2, 2, 2)
     for name, correct_values in train_accs.items():
         plt.plot(correct_values, label=name)
     plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Accuracy Curves for Different Algorithms')
+    plt.ylabel('Training Accuracy')
+    plt.title('Training Accuracy Curves for Different Algorithms')
     plt.legend()
+
+    plt.subplot(2, 2, 3)
+    for name, loss_values in all_test_losses.items():
+        plt.plot(loss_values, label=name)
+    plt.xlabel('Epoch')
+    plt.ylabel('Valid Loss')
+    plt.title('Valid Loss Curves for Different Algorithms')
+    plt.legend()
+
+    plt.subplot(2, 2, 4)
+    for name, correct_values in all_test_accs.items():
+        plt.plot(correct_values, label=name)
+    plt.xlabel('Epoch')
+    plt.ylabel('Valid Accuracy')
+    plt.title('Valid Accuracy Curves for Different Algorithms')
+    plt.legend()
+
     # 保存图表
     plt.savefig('./results/plots/loss_accuracy_curves1.png')
     plt.show()
@@ -283,64 +301,74 @@ def main():
     # Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.错误解决方法
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     #训练轮数
-    num_epochs = 20
+    num_epochs = 150
     # optimizers = {
-    #     'SGD': optim.SGD(net.parameters(), lr=0.01, momentum=0.9),
+    #     'SGD': optim.SGD(net.parameters(), lr=0.001, momentum=0.9),
     #     'RMSprop': optim.RMSprop(net.parameters(), lr=0.001),
     #     'Adam': optim.Adam(net.parameters(), lr=0.001),
     #     'AdamW': optim.AdamW(net.parameters(), lr=0.001),
     #     'Adagrad': optim.Adagrad(net.parameters(), lr=0.01),
     #     'Adadelta': optim.Adadelta(net.parameters(), lr=1.0)
     # }
-    optimizer_names=["SGD+Momentum","Adam","Adadelta"]
-    # 保存图表路径
-    if not os.path.exists('./results/plots'):
-        os.makedirs('./results/plots')
+    optimizer_names=["SGD+Momentum","RMSprop","Adam","AdamW","Adagrad","Adadelta"]
+    # 保存路径
+    if not os.path.exists('results/plots'):
+        os.makedirs('results/plots')
     if not os.path.exists('./model'):
         os.makedirs('./model')
-    if not os.path.exists('./results/roc_curves'):
-        os.makedirs('./results/roc_curves')
+    if not os.path.exists('results/roc_curves'):
+        os.makedirs('results/roc_curves')
+    with open("accuracy_log.txt", "w") as file:
+        file.write("Epoch,Accuracy\n")  # 写入文件头
 
     #得到各个算法的损失度、准确率、精确率、召回率、f1分数
     all_train_losses = {name: [] for name in optimizer_names}
     all_train_accs = {name: [] for name in optimizer_names}
     all_test_losses = {name: [] for name in optimizer_names}
-    all_test_corrects = {name: [] for name in optimizer_names}
+    all_test_accs = {name: [] for name in optimizer_names}
     precisions={name: 0.0 for name in optimizer_names}
     recalls={name: 0.0 for name in optimizer_names}
     f1s={name: 0.0 for name in optimizer_names}
 
-    for i in range(3):
+    for i in range(len(optimizer_names)):
         # # 加载预训练的 ResNet18
         # net = models.resnet18(pretrained=True)
         # # 替换最后一层，以匹配你的数据集的类别数
         # num_classes = 10  # CIFAR-10 数据集有 10 个类别
         # net.fc = nn.Linear(net.fc.in_features, num_classes)
         # net = net.to(device)
-        net=LeNet().to(device)
+        net= model_ft.to(device)
         optimizer_name = optimizer_names[i]
         if i==0:
             optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
         elif i==1:
-            optimizer = optim.Adam(net.parameters(), lr=0.001)
+            optimizer = optim.RMSprop(net.parameters(), lr=0.001)
         elif i==2:
+            optimizer = optim.Adam(net.parameters(), lr=0.001)
+        elif i==3:
+            optimizer = optim.AdamW(net.parameters(), lr=0.001)
+        elif i==4:
+            optimizer = optim.Adagrad(net.parameters(), lr=0.01)
+        elif i==5:
             optimizer = optim.Adadelta(net.parameters(), lr=1.0)
-        print(f'Training with {optimizer_name}')
-        criterion = nn.CrossEntropyLoss()
 
-        train_losses, train_accs ,net= train_and_test(net,device,trainloader, optimizer_name,optimizer, num_epochs)  # 训练网络
+        print(f'Training with {optimizer_name}')
+
+        net,train_losses, train_accs ,test_losses,test_accs= train_and_test(net,device,train_loader, optimizer_name,optimizer, num_epochs,i)  # 训练网络
         all_train_losses[optimizer_name]= train_losses
         all_train_accs[optimizer_name]= train_accs
+        all_test_losses[optimizer_name]= test_losses
+        all_test_accs[optimizer_name]= test_accs
 
         #评估模型
-        accuracy, all_labels,all_preds,all_probs = test_model(net,device,testloader)
-        precision, recall, f1 = evaluate(net,device,optimizer_name,testloader,all_labels, all_preds)
+        accuracy, all_labels,all_preds,all_probs = test_model(net,device,test_loader)
+        precision, recall, f1 = evaluate(net,device,optimizer_name,test_loader,all_labels, all_preds)
         precisions[optimizer_name] = precision  #精确度
         recalls[optimizer_name] = recall  #召回率
         f1s[optimizer_name] = f1   #F1分数
         plot_auc_roc(all_labels,all_probs,optimizer_name)
 
-    plot_loss_acc(all_train_losses,all_train_accs)
+    plot_loss_acc(all_train_losses,all_train_accs,all_test_losses,all_test_accs)
 
 
 
